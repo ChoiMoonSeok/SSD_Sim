@@ -2,6 +2,8 @@
 SSD 시뮬레이터의 하드웨어 구성요소를 class로 정의하는 파일
 '''
 
+from collections import deque
+
 
 class Page:
     '''
@@ -37,9 +39,13 @@ class Block:
     ssd는 Block단위로 데이터를 삭제한다.
     '''
 
-    def __init__(self, block_num, block_capa, page_size): # block_capa는 kb 단위
+    def __init__(self, block_num, pages): 
         self.block_num = block_num
-        self.pages = [Page(ppn) for ppn in range(block_num * (block_capa // page_size), (block_num + 1) * (block_capa // page_size))]
+        self.valid_count = 0
+        self.invalid_count = 0
+        self.erase_count = 0
+        self.open_pages = deque([i for i in range(len(pages))])
+        self.pages = pages
 
     
     def get_block_num(self):
@@ -49,6 +55,21 @@ class Block:
     def get_pages(self):
         return self.pages
     
+class Plane:
+
+
+    def __init__(self, plane_num, blocks):
+        self.plane_num = plane_num
+        self.blocks = blocks
+        self.open_block = 0
+
+    
+    def get_plane_num(self):
+        return self.plane_num
+    
+
+    def get_blocks(self):
+        return self.blocks
 
 
 class Chip:
@@ -57,57 +78,33 @@ class Chip:
     Chip은 nand flash 1개를 말한다.
     '''
 
-    def __init__(self, chip_num, chip_capa, block_size, page_size): # chip_capa는 mb 단위
+    def __init__(self, chip_num, planes): # chip_capa는 mb 단위
         self.chip_num = chip_num
-        self.blocks = [Block(blk_num, block_size, page_size) for blk_num in range(chip_num * chip_capa * 1024 // block_size, (chip_num + 1) * chip_capa * 1024 // block_size)]
+        self.planes = planes
 
 
     def get_chip_num(self):
         return self.chip_num
     
 
-    def get_blocks(self):
-        return self.blocks
+    def get_planes(self):
+        return self.planes
 
 
-
-class SuperBlock:
+class Channel:
     '''
-    ssd에 존재하는 channel * way 개의 chip의 블록 묶음
-    ex) channel = 4
-        way = 2
-        chip = 32
-
-        1개의 super block = 4 * 2 개의 block(4 * 2개의 chip에서 각각 뽑아온)
+    ssd의 Channel에 대해 정의하는 클래스
+    Channel은 nand flash가 컨트롤러와 연결되는 Bus를 말한다.
     '''
 
-    def __init__(self, super_block_num, chips):
-        self.super_block_num = super_block_num
-        self.blocks = [chip.blocks[self.super_block_num] for chip in chips]
+    def __init__(self, channel_num, chips):
+        self.channel_num = channel_num
+        self.chips = chips
 
     
-    def get_super_block_num(self):
-        return self.super_block_num
-
-
-    def get_blocks(self):
-        return self.blocks
-
-
-
-class SuperChip:
-    '''
-    SuperBlock의 모음
-    '''
-
-    def __init__(self, super_chip_num, super_blocks):
-        self.super_chip_num = super_chip_num
-        self.super_blocks = super_blocks
-
-
-    def get_super_chip_num(self):
-        return self.super_chip_num
+    def get_channel_num(self):
+        return self.channel_num
     
 
-    def get_super_blocks(self):
-        return self.super_blocks
+    def get_chips(self):
+        return self.chips

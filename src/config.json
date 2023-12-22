@@ -1,0 +1,7 @@
+{
+    "page_per_block":256,
+    "blocks_per_plane":256,
+    "plane_per_chip":1,
+    "chip_per_channel":8,
+    "channel":8
+}
